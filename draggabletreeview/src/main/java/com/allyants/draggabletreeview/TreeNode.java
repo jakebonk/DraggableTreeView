@@ -85,6 +85,9 @@ public class TreeNode {
     }
 
     public TreeNode setParent(TreeNode parent,int pos){
+        if(this.parent!=null){
+            this.parent.removeChild(this);
+        }
         this.parent = parent;
         level = parent.level + 1;
         parent.addChild(this,pos);
@@ -92,17 +95,26 @@ public class TreeNode {
     }
 
     public TreeNode setParent(TreeNode parent){
+        if(this.parent!=null){
+            this.parent.removeChild(this);
+        }
         this.parent = parent;
         parent.addChild(this);
         return this;
     }
 
     public void addChild(TreeNode node){
+        if(node.parent!=null){
+            node.parent.removeChild(node);
+        }
         node.parent = this;
         children.add(node);
     }
 
     public void addChild(TreeNode node,int position){
+        if(node.parent!=null){
+            node.parent.removeChild(node);
+        }
         node.parent = this;
         if(position <= -1){
             position = 0;
@@ -110,19 +122,9 @@ public class TreeNode {
         children.add(position,node);
     }
 
-    public void addChildren(ArrayList<TreeNode> nodes){
-        for(int i = nodes.size()-1;i >= 0;i++){
-            nodes.get(i).setParent(this);
-            children.add(nodes.get(i));
-        }
-    }
-
     public void removeChild(TreeNode node){
         children.remove(node);
     }
 
-    public void removeChildren(ArrayList<TreeNode> nodes){
-        children.removeAll(nodes);
-    }
 
 }

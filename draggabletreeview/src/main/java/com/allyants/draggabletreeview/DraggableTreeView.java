@@ -250,7 +250,7 @@ public class DraggableTreeView extends FrameLayout{
             LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
             int t = dpToPx(10);
-            layoutParams.setMargins(dpToPx(sideMargin*node.getLevel() ), t, t, t );
+            layoutParams.setMargins(dpToPx(sideMargin*node.getLevel() ), 0, 0, 0 );
             mItem.setLayoutParams(layoutParams);
             mItem.addView(view);
             ((LinearLayout)adapter.root.getView()).addView(mItem);
