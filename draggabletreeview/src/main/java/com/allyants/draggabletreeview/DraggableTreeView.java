@@ -32,8 +32,10 @@ public class DraggableTreeView extends FrameLayout{
     private Rect mHoverCellCurrentBounds;
     private Rect mHoverCellOriginalBounds;
 
-    private TreeNode mobileNode;
+    private TreeNode mobileNode,lastNode;
     private int sideMargin = 20;
+    private enum Drop{above_sibling,below_sibling,child}
+    Drop drop_item;
 
     private int mDownY = -1;
     private int mDownX = -1;
@@ -154,8 +156,6 @@ public class DraggableTreeView extends FrameLayout{
     }
 
     private void handleItemDrag(){
-        int position = ((LinearLayout)adapter.root.getView()).indexOfChild(((View)mobileNode.getView().getParent()));
-
         LinearLayout layout = ((LinearLayout)adapter.root.getView());
         for(int i =0; i< layout.getChildCount(); i++)
         {
@@ -163,15 +163,28 @@ public class DraggableTreeView extends FrameLayout{
 
             int[] location = new int[2];
             view.getLocationInWindow(location);
+            LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) view.getLayoutParams();
             Rect viewRect = new Rect(location[0], location[1], location[0]+view.getWidth(), location[1]+view.getHeight());
-            Rect outRect = new Rect(0, location[1], Resources.getSystem().getDisplayMetrics().widthPixels, location[1]+view.getHeight());
+            Rect outRect = new Rect(0, location[1]-lp.topMargin, Resources.getSystem().getDisplayMetrics().widthPixels, location[1]+view.getHeight()+lp.bottomMargin);
 
             if(outRect.contains(mLastEventX, mLastEventY))
             {
                 //set last position
-                Log.e("e", String.valueOf(i));
                 if(viewRect.contains(mLastEventX,mLastEventY)) {
-                    Log.e("ee",(String)nodeOrder.get(i).getData());
+                    //make child
+                    drop_item = Drop.child;
+                    lastNode = nodeOrder.get(i);
+                }else if(mLastEventY < viewRect.top){
+                    //above so make sibling
+                    drop_item = Drop.above_sibling;
+                    lastNode = nodeOrder.get(i);
+                }else if(mLastEventY > viewRect.bottom){
+                    //below so make sibling
+                    drop_item = Drop.below_sibling;
+                    lastNode = nodeOrder.get(i);
+                }else{
+                    drop_item = Drop.below_sibling;
+                    lastNode = nodeOrder.get(i);
                 }
             }
         }
@@ -182,6 +195,19 @@ public class DraggableTreeView extends FrameLayout{
             mobileView.setVisibility(VISIBLE);
             mHoverCell = null;
             if(adapter != null) {
+                if(drop_item == Drop.above_sibling) {
+                    Log.e("ee", "Above "+(String) lastNode.getData());
+                    int pos = lastNode.getParent().getChildren().indexOf(lastNode);
+                    mobileNode.setParent(lastNode.getParent(),pos-1);
+                }else if(drop_item == Drop.below_sibling){
+                    Log.e("ee", "Below "+(String) lastNode.getData());
+                    int pos = lastNode.getParent().getChildren().indexOf(lastNode);
+                    mobileNode.setParent(lastNode.getParent(),pos+1);
+                }else if(drop_item == Drop.child){
+                    Log.e("ee", "Child "+(String) lastNode.getData());
+                    mobileNode.setParent(lastNode);
+                }
+
                 mParentLayout.removeAllViews();
                 inflateViews(adapter.root);
             }
@@ -223,7 +249,8 @@ public class DraggableTreeView extends FrameLayout{
             });
             LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-            layoutParams.setMargins(dpToPx(sideMargin*node.getLevel() ), 0, 0, 0);
+            int t = dpToPx(10);
+            layoutParams.setMargins(dpToPx(sideMargin*node.getLevel() ), t, t, t );
             mItem.setLayoutParams(layoutParams);
             mItem.addView(view);
             ((LinearLayout)adapter.root.getView()).addView(mItem);

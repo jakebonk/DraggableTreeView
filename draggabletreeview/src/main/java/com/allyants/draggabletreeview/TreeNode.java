@@ -104,6 +104,9 @@ public class TreeNode {
 
     public void addChild(TreeNode node,int position){
         node.parent = this;
+        if(position <= -1){
+            position = 0;
+        }
         children.add(position,node);
     }
 
