@@ -16,6 +16,8 @@ import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 
+import java.util.ArrayList;
+
 /**
  * Created by jbonk on 6/16/2017.
  */
@@ -37,6 +39,7 @@ public class DraggableTreeView extends FrameLayout{
     private int mDownX = -1;
     private int mLastEventX = -1;
     private int mLastEventY = -1;
+    private ArrayList<TreeNode> nodeOrder = new ArrayList<>();
 
     private View mobileView;
     private boolean mCellIsMobile = false;
@@ -152,7 +155,26 @@ public class DraggableTreeView extends FrameLayout{
 
     private void handleItemDrag(){
         int position = ((LinearLayout)adapter.root.getView()).indexOfChild(((View)mobileNode.getView().getParent()));
-        Log.e("e",String.valueOf(position));
+
+        LinearLayout layout = ((LinearLayout)adapter.root.getView());
+        for(int i =0; i< layout.getChildCount(); i++)
+        {
+            View view = layout.getChildAt(i);
+
+            int[] location = new int[2];
+            view.getLocationInWindow(location);
+            Rect viewRect = new Rect(location[0], location[1], location[0]+view.getWidth(), location[1]+view.getHeight());
+            Rect outRect = new Rect(0, location[1], Resources.getSystem().getDisplayMetrics().widthPixels, location[1]+view.getHeight());
+
+            if(outRect.contains(mLastEventX, mLastEventY))
+            {
+                //set last position
+                Log.e("e", String.valueOf(i));
+                if(viewRect.contains(mLastEventX,mLastEventY)) {
+                    Log.e("ee",(String)nodeOrder.get(i).getData());
+                }
+            }
+        }
     }
 
     private void touchEventsCancelled() {
@@ -174,6 +196,7 @@ public class DraggableTreeView extends FrameLayout{
 
     public void createTreeItem(View view, final TreeNode node){
         if(view != null) {
+            nodeOrder.add(node);
             final LinearLayout mItem = new LinearLayout(getContext());
             mItem.setOrientation(LinearLayout.VERTICAL);
             if(view.getParent() != null) {
