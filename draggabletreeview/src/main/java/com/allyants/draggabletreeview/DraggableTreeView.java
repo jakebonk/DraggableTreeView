@@ -274,7 +274,6 @@ public class DraggableTreeView extends FrameLayout{
         mCellIsMobile = false;
     }
 
-
     public void createTreeItem(View view, final TreeNode node){
         if(view != null) {
             nodeOrder.add(node);
