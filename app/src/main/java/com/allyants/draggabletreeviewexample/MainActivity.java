@@ -23,8 +23,19 @@ public class MainActivity extends AppCompatActivity {
         subitem.addChild(new TreeNode("Sub Sub Item 1"));
         item.addChild(subitem);
         item.addChild(new TreeNode("Sub Item 1"));
+        root.addChild(new TreeNode("Item 3"));
+        root.addChild(new TreeNode("Item 4"));
+        root.addChild(new TreeNode("Item 5"));
+        root.addChild(new TreeNode("Item 6"));
+        root.addChild(new TreeNode("Item 7"));
+        root.addChild(new TreeNode("Item 8"));
+        root.addChild(new TreeNode("Item 9"));
+        root.addChild(new TreeNode("Item 10"));
+        root.addChild(new TreeNode("Item 11"));
+        root.addChild(new TreeNode("Item 12"));
         root.addChild(item2);
         root.addChild(item);
+//        draggableTreeView.maxLevels = 2;
         SimpleTreeViewAdapter adapter = new SimpleTreeViewAdapter(this,root);
         draggableTreeView.setAdapter(adapter);
     }

@@ -34,16 +34,19 @@ public class DraggableTreeView extends FrameLayout{
 
     private TreeNode mobileNode,lastNode;
     private int sideMargin = 20;
-    private enum Drop{above_sibling,below_sibling,child}
+    private enum Drop{above_sibling,below_sibling,child,cancel}
     Drop drop_item;
 
     private long mPlaceholderCheck = System.currentTimeMillis();
     private long mPlaceholderDelay = new Long(200);
     private int mDownY = -1;
     private int mDownX = -1;
+    private int mScrollDownY = -1;
     private int mLastEventX = -1;
     private int mLastEventY = -1;
     private ArrayList<TreeNode> nodeOrder = new ArrayList<>();
+    public int maxLevels = -1;
+    public boolean makeSiblingAtMaxLevel = true;
 
     private View mobileView;
     private boolean mCellIsMobile = false;
@@ -123,6 +126,9 @@ public class DraggableTreeView extends FrameLayout{
                 if(mDownX == -1){
                     mDownX = (int)event.getRawX();
                 }
+                if(mScrollDownY == -1){
+                    mScrollDownY = mRootLayout.getScrollY();
+                }
 
                 mLastEventX = (int) event.getRawX();
                 mLastEventY = (int) event.getRawY();
@@ -135,7 +141,7 @@ public class DraggableTreeView extends FrameLayout{
                     int root_location[] = new int[2];
                     mRootLayout.getLocationOnScreen(root_location);
                     int offsetX = deltaX-root_location[0];
-                    int offsetY = location[1]+deltaY-root_location[1];
+                    int offsetY = location[1]+deltaY-root_location[1]+mRootLayout.getScrollY()-mScrollDownY;
                     mHoverCellCurrentBounds.offsetTo(offsetX,
                             offsetY);
                     mHoverCell.setBounds(rotatedBounds(mHoverCellCurrentBounds,0.0523599f));
@@ -173,70 +179,117 @@ public class DraggableTreeView extends FrameLayout{
             if(outRect.contains(mLastEventX, mLastEventY))
             {
                 //set last position
-                if(viewRect.contains(mLastEventX,mLastEventY)) {
-                    //make child
+                int[] root_location = new int[2];
+                mRootLayout.getLocationOnScreen(root_location);
+                if(root_location[1] > mLastEventY - dpToPx(25)){
+                    mRootLayout.smoothScrollBy(0,-10);
+                }
+                if(root_location[1]+mRootLayout.getHeight() < mLastEventY + dpToPx(25)){
+                    mRootLayout.smoothScrollBy(0,10);
+                }
+                if(mLastEventY < viewRect.top+view.getHeight()/2 && mLastEventX <= mDownX+dpToPx(40)){
+                    //above so make sibling
+                    if(mPlaceholderCheck+mPlaceholderDelay < System.currentTimeMillis()) {
+                        drop_item = Drop.above_sibling;
+                        lastNode = nodeOrder.get(i);
+                        if(adapter.placeholder.getParent() != null){
+                            ((ViewGroup) adapter.placeholder.getParent()).removeView(adapter.placeholder);
+                        }
+                        if(adapter.bad_placeholder.getParent() != null){
+                            ((ViewGroup) adapter.bad_placeholder.getParent()).removeView(adapter.bad_placeholder);
+                        }
+                        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
+                                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+                        layoutParams.setMargins(0, 0, 0, 0 );
+                        adapter.placeholder.setLayoutParams(layoutParams);
+                        adapter.bad_placeholder.setLayoutParams(layoutParams);
+                        int pos = ((ViewGroup) lastNode.getView().getParent()).indexOfChild(lastNode.getView());
+                        int level = mobileNode.getChildLevel()+lastNode.getLevel();
+                        if(maxLevels != -1 && maxLevels < level){
+                            ((ViewGroup) lastNode.getView().getParent()).addView(adapter.bad_placeholder, pos);
+                            drop_item = Drop.cancel;
+                        }else {
+                            ((ViewGroup) lastNode.getView().getParent()).addView(adapter.placeholder, pos);
+                        }
+                        mPlaceholderCheck = System.currentTimeMillis();
+                    }
+            }else if(mLastEventX >  mDownX+dpToPx(40)) {
+                //make child
+                if(mPlaceholderCheck+mPlaceholderDelay < System.currentTimeMillis()) {
                     drop_item = Drop.child;
                     lastNode = nodeOrder.get(i);
-                    if(mPlaceholderCheck+mPlaceholderDelay < System.currentTimeMillis()) {
-                        if(adapter.placeholder.getParent() != null){
-                            ((ViewGroup) adapter.placeholder.getParent()).removeView(adapter.placeholder);
-                        }
-                        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
-                                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-                        layoutParams.setMargins(dpToPx(sideMargin), 0, 0, 0 );
-                        adapter.placeholder.setLayoutParams(layoutParams);
+                    if(adapter.placeholder.getParent() != null){
+                        ((ViewGroup) adapter.placeholder.getParent()).removeView(adapter.placeholder);
+                    }
+                    if(adapter.bad_placeholder.getParent() != null){
+                        ((ViewGroup) adapter.bad_placeholder.getParent()).removeView(adapter.bad_placeholder);
+                    }
+                    LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
+                            LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+                    layoutParams.setMargins(dpToPx(sideMargin), 0, 0, 0 );
+                    adapter.placeholder.setLayoutParams(layoutParams);
+                    adapter.bad_placeholder.setLayoutParams(layoutParams);
+                    int level = mobileNode.getChildLevel()+lastNode.getLevel()+1;
+                    if(maxLevels != -1 && maxLevels < level){
+                        ((ViewGroup) lastNode.getView()).addView(adapter.bad_placeholder);
+                        drop_item = Drop.cancel;
+                    }else {
                         ((ViewGroup) lastNode.getView()).addView(adapter.placeholder);
-                        mPlaceholderCheck = System.currentTimeMillis();
                     }
-                }else if(mLastEventY < viewRect.top){
-                    //above so make sibling
-                    drop_item = Drop.above_sibling;
-                    lastNode = nodeOrder.get(i);
-                    if(mPlaceholderCheck+mPlaceholderDelay < System.currentTimeMillis()) {
-                        if(adapter.placeholder.getParent() != null){
-                            ((ViewGroup) adapter.placeholder.getParent()).removeView(adapter.placeholder);
-                        }
-                        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
-                                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-                        layoutParams.setMargins(0, 0, 0, 0 );
-                        adapter.placeholder.setLayoutParams(layoutParams);
-                        int pos = ((ViewGroup) lastNode.getView().getParent()).indexOfChild(lastNode.getView());
-                        ((ViewGroup) lastNode.getView().getParent()).addView(adapter.placeholder,pos);
-                        mPlaceholderCheck = System.currentTimeMillis();
-                    }
-                }else if(mLastEventY > viewRect.bottom){
+                    mPlaceholderCheck = System.currentTimeMillis();
+                }
+            }else if(mLastEventY > viewRect.bottom){
                     //below so make sibling
-                    drop_item = Drop.below_sibling;
-                    lastNode = nodeOrder.get(i);
                     if(mPlaceholderCheck+mPlaceholderDelay < System.currentTimeMillis()) {
+                        drop_item = Drop.below_sibling;
+                        lastNode = nodeOrder.get(i);
                         if(adapter.placeholder.getParent() != null){
                             ((ViewGroup) adapter.placeholder.getParent()).removeView(adapter.placeholder);
+                        }
+                        if(adapter.bad_placeholder.getParent() != null){
+                            ((ViewGroup) adapter.bad_placeholder.getParent()).removeView(adapter.bad_placeholder);
                         }
                         LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
                                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
                         layoutParams.setMargins(0, 0, 0, 0 );
                         adapter.placeholder.setLayoutParams(layoutParams);
+                        adapter.bad_placeholder.setLayoutParams(layoutParams);
                         int pos = ((ViewGroup) lastNode.getView().getParent()).indexOfChild(lastNode.getView());
-                        ((ViewGroup) lastNode.getView().getParent()).addView(adapter.placeholder,pos+1);
+                        int level = mobileNode.getChildLevel()+lastNode.getLevel();
+                        if(maxLevels != -1 && maxLevels < level){
+                            ((ViewGroup) lastNode.getView().getParent()).addView(adapter.bad_placeholder, pos + 1);
+                            drop_item = Drop.cancel;
+                        }else {
+                            ((ViewGroup) lastNode.getView().getParent()).addView(adapter.placeholder, pos + 1);
+                        }
                         mPlaceholderCheck = System.currentTimeMillis();
                     }
                 }else{
-                    drop_item = Drop.below_sibling;
-                    lastNode = nodeOrder.get(i);
                     if(mPlaceholderCheck+mPlaceholderDelay < System.currentTimeMillis()) {
+                        drop_item = Drop.below_sibling;
+                        lastNode = nodeOrder.get(i);
                         if(adapter.placeholder.getParent() != null){
                             ((ViewGroup) adapter.placeholder.getParent()).removeView(adapter.placeholder);
+                        }
+                        if(adapter.bad_placeholder.getParent() != null){
+                            ((ViewGroup) adapter.bad_placeholder.getParent()).removeView(adapter.bad_placeholder);
                         }
                         LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
                                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
                         layoutParams.setMargins(0, 0, 0, 0 );
                         adapter.placeholder.setLayoutParams(layoutParams);
+                        adapter.bad_placeholder.setLayoutParams(layoutParams);
                         int pos = ((ViewGroup) lastNode.getView().getParent()).indexOfChild(lastNode.getView());
-                        ((ViewGroup) lastNode.getView().getParent()).addView(adapter.placeholder,pos+1);
+                        int level = mobileNode.getChildLevel()+lastNode.getLevel();
+                        if(maxLevels != -1 && maxLevels < level){
+                            ((ViewGroup) lastNode.getView().getParent()).addView(adapter.bad_placeholder, pos + 1);
+                            drop_item = Drop.cancel;
+                        }else {
+                            ((ViewGroup) lastNode.getView().getParent()).addView(adapter.placeholder, pos + 1);
+                        }
                         mPlaceholderCheck = System.currentTimeMillis();
                     }
                 }
-                Log.e("ee", (String)lastNode.getData());
             }
         }
     }
@@ -249,28 +302,36 @@ public class DraggableTreeView extends FrameLayout{
                 if(adapter.placeholder.getParent() != null) {
                     ((ViewGroup) adapter.placeholder.getParent()).removeView(adapter.placeholder);
                 }
+                if(adapter.bad_placeholder.getParent() != null) {
+                    ((ViewGroup) adapter.bad_placeholder.getParent()).removeView(adapter.bad_placeholder);
+                }
                 //Make sure it didn't drop on itself
-                if(lastNode != mobileNode) {
+                if(lastNode != mobileNode || drop_item != Drop.cancel) {
                     if (drop_item == Drop.above_sibling) {
                         Log.e("ee", "Above " + (String) lastNode.getData());
-                        int pos = lastNode.getParent().getChildren().indexOf(lastNode);
+                        int pos = lastNode.getPosition();
                         mobileNode.setParent(lastNode.getParent(), pos - 1);
                     } else if (drop_item == Drop.below_sibling) {
                         Log.e("ee", "Below " + (String) lastNode.getData());
-                        int pos = lastNode.getParent().getChildren().indexOf(lastNode);
-                        mobileNode.setParent(lastNode.getParent(), pos + 1);
+                        int pos = lastNode.getPosition();
+                        //if it came from below we need to add
+                        Log.e("ee",String.valueOf(pos));
+                        mobileNode.setParent(lastNode.getParent(), pos);
                     } else if (drop_item == Drop.child) {
                         Log.e("ee", "Child " + (String) lastNode.getData());
-                        mobileNode.setParent(lastNode);
+                        mobileNode.setParent(lastNode,0);
                     }
                 }
+
                 notifyDataSetChanged();
             }
             invalidate();
+
         }
 
         mDownX = -1;
         mDownY = -1;
+        mScrollDownY = -1;
         mCellIsMobile = false;
     }
 
@@ -297,14 +358,12 @@ public class DraggableTreeView extends FrameLayout{
                             mobileView.setVisibility(INVISIBLE);
                         }
                     });
-
                     return false;
                 }
             });
             LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-            int t = dpToPx(10);
-            layoutParams.setMargins(dpToPx(sideMargin*node.getLevel() ), t, t, t );
+            layoutParams.setMargins(dpToPx(sideMargin*node.getLevel() ), 0, 0, 0 );
             mItem.setLayoutParams(layoutParams);
             mItem.addView(view);
             ((LinearLayout)adapter.root.getView()).addView(mItem);

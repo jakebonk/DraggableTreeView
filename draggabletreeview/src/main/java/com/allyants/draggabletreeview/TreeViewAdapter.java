@@ -13,17 +13,20 @@ public abstract class TreeViewAdapter {
 
     Context context;
     TreeNode root;
-    View placeholder;
+    View placeholder,bad_placeholder;
 
     public TreeViewAdapter(Context context,TreeNode root){
         this.root = root;
         this.context = context;
         this.placeholder = View.inflate(context,R.layout.tree_view_item_placeholder,null);
+        this.bad_placeholder = View.inflate(context,R.layout.tree_view_item_bad_placeholder,null);
     }
 
-    public TreeViewAdapter(Context context,TreeNode root, View placeholder){
-        this.context = context;
-        this.root = root;
+    public void setBadPlaceholder(View bad_placeholder){
+        this.bad_placeholder = bad_placeholder;
+    }
+
+    public void setPlaceholder(View placeholder){
         this.placeholder = placeholder;
     }
 

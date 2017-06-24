@@ -84,8 +84,21 @@ public class TreeNode {
         return children;
     }
 
+    public int getPosition(){
+        if(this.getParent() != null) {
+            return this.getParent().getChildren().indexOf(this);
+        }else{
+            return -1;
+        }
+    }
+
     public TreeNode setParent(TreeNode parent,int pos){
         if(this.parent!=null){
+            if(this.parent == parent){
+                if(this.parent.getChildren().indexOf(this) > pos){
+                    pos += 1;
+                }
+            }
             this.parent.removeChild(this);
         }
         this.parent = parent;
@@ -122,8 +135,22 @@ public class TreeNode {
         children.add(position,node);
     }
 
-    public void removeChild(TreeNode node){
-        children.remove(node);
+    public int getChildLevel(){
+        return getChildLevelRecursive() - 1;
+    }
+
+    private int getChildLevelRecursive(){
+        int temp = 0;
+        for(int i = 0; i < children.size();i++){
+            if(temp < children.get(i).getChildLevelRecursive()){
+                temp = children.get(i).getChildLevelRecursive();
+            }
+        }
+        return temp + 1;
+    }
+
+    public boolean removeChild(TreeNode node){
+        return children.remove(node);
     }
 
 

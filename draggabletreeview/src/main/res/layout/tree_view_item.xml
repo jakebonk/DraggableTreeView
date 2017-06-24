@@ -7,13 +7,14 @@
     <android.support.v7.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:contentPadding="7dp"
+        app:contentPadding="10dp"
         android:layout_margin="5dp">
 
         <TextView
             android:text="TextView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:textSize="18dp"
             android:id="@+id/textView" />
     </android.support.v7.widget.CardView>
 </LinearLayout>
