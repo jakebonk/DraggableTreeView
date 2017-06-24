@@ -5,6 +5,8 @@ DraggableTreeView is a custom view that mimics a Tree View directory and also im
 
 ## Example
 
+![Basic Example](https://thumbs.gfycat.com/ConfusedPerkyDwarfmongoose-size_restricted.gif)
+
 ## Download library with Jitpack.io
 Add this to your build.gradle file for your app.
 
