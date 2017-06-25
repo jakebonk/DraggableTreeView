@@ -10,23 +10,28 @@ DraggableTreeView is a custom view that mimics a Tree View directory and also im
 ## Download library with Jitpack.io
 Add this to your build.gradle file for your app.
 
+```java
 	allprojects {
 		repositories {
 			...
 			maven { url 'https://jitpack.io' }
 		}
 	}
+```
 
 Add this to your dependencies in build.gradle for your project.
 
+```java
 	dependencies {
 	        compile 'com.github.jakebonk:DraggableTreeViewExample:1.0.0'
 	}
+```
   
   ## Usage
   
   DraggableTreeView is organized by a custom adapter called TreeViewAdapter, I included a Simple implementation of the adapter class called SimpleTreeViewAdapter. 
-  
+
+```java
       DraggableTreeView draggableTreeView = (DraggableTreeView)findViewById(R.id.dtv);
       TreeNode root = new TreeNode(this);
       TreeNode item = new TreeNode("Item 1");
@@ -50,19 +55,22 @@ Add this to your dependencies in build.gradle for your project.
       root.addChild(item);
       SimpleTreeViewAdapter adapter = new SimpleTreeViewAdapter(this,root);
       draggableTreeView.setAdapter(adapter);
+```
 
 You can also change both the succesful placeholder as well as the bad placeholder by passing a view through the function 
-      
+
+```java
       adapter.setBadPlaceholder(view);
-      
+```
 or
+```java
+      adapter.setPlaceholder(view);      
+```
 
-      adapter.setPlaceholder(view);
-      
 By assigning the variable maxLevel a value you can define how many levels the tree view can drag to.
-
-      draggableTreeView.maxLevels = 4;
-
+```java
+      draggableTreeView.maxLevels = 4;     
+```
 
 ## To-Do
 
