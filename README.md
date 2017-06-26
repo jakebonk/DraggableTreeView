@@ -1,4 +1,4 @@
-[![](https://jitpack.io/v/jakebonk/DraggableTreeViewExample.svg)](https://jitpack.io/#jakebonk/DraggableTreeViewExample)
+[![](https://jitpack.io/v/jakebonk/DraggableTreeView.svg)](https://jitpack.io/#jakebonk/DraggableTreeView)
 
 # DraggableTreeView
 DraggableTreeView is a custom view that mimics a Tree View directory and also implements drag and drop. The tree view can go to the n-th level by default there is no limit.
