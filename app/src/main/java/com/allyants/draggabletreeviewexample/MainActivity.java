@@ -2,6 +2,8 @@ package com.allyants.draggabletreeviewexample;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
+import android.view.View;
 
 import com.allyants.draggabletreeview.DraggableTreeView;
 import com.allyants.draggabletreeview.SimpleTreeViewAdapter;
@@ -35,8 +37,24 @@ public class MainActivity extends AppCompatActivity {
         root.addChild(new TreeNode("Item 12"));
         root.addChild(item2);
         root.addChild(item);
-//        draggableTreeView.maxLevels = 2;
         SimpleTreeViewAdapter adapter = new SimpleTreeViewAdapter(this,root);
         draggableTreeView.setAdapter(adapter);
+        draggableTreeView.setOnDragItemListener(new DraggableTreeView.DragItemCallback() {
+            @Override
+            public void onStartDrag(View item, TreeNode node) {
+                Log.e("start",(String)node.getData());
+            }
+
+            @Override
+            public void onChangedPosition(View item, TreeNode child, TreeNode parent, int position) {
+                Log.e("changed",(String)parent.getData()+" > "+(String)child.getData()+":"+String.valueOf(position));
+            }
+
+            @Override
+            public void onEndDrag(View item, TreeNode child, TreeNode parent, int position) {
+                Log.e("end",(String)parent.getData()+" > "+(String)child.getData()+":"+String.valueOf(position));
+            }
+        });
+
     }
 }

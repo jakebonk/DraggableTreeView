@@ -11,8 +11,6 @@ import android.widget.TextView;
 
 public class SimpleTreeViewAdapter extends TreeViewAdapter{
 
-    private int leftMargin = 20;
-
     public SimpleTreeViewAdapter(Context context, TreeNode root) {
         super(context, root);
     }
@@ -27,15 +25,6 @@ public class SimpleTreeViewAdapter extends TreeViewAdapter{
         view.setLayoutParams(layoutParams);
         TextView textView = (TextView)view.findViewById(R.id.textView);
         textView.setText(((String)data));
-        if(hasChildren){
-            view.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-//                    node.setExpanded(node.isCollapsed());
-//                    getDraggableTreeView().notifyDataSetChanged();
-                }
-            });
-        }
 
         return view;
     }

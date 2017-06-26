@@ -8,7 +8,6 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -61,6 +60,35 @@ public class DraggableTreeView extends FrameLayout{
 
     public DraggableTreeView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+    }
+
+    private DragItemCallback mDragItemCallback = new DragItemCallback(){
+
+        @Override
+        public void onStartDrag(View item, TreeNode node){
+
+        }
+
+        @Override
+        public void onChangedPosition(View item, TreeNode child, TreeNode parent, int position) {
+
+        }
+
+        @Override
+        public void onEndDrag(View item, TreeNode child, TreeNode parent, int position) {
+
+        }
+
+    };
+
+    public void setOnDragItemListener(DragItemCallback dragItemCallback){
+        mDragItemCallback = dragItemCallback;
+    }
+
+    public interface DragItemCallback{
+        void onStartDrag(View item,TreeNode node);
+        void onChangedPosition(View item,TreeNode child,TreeNode parent,int position);
+        void onEndDrag(View item,TreeNode child,TreeNode parent, int position);
     }
 
     public void setAdapter(TreeViewAdapter adapter){
@@ -190,6 +218,11 @@ public class DraggableTreeView extends FrameLayout{
                 if(mLastEventY < viewRect.top+view.getHeight()/2 && mLastEventX <= mDownX+dpToPx(40)){
                     //above so make sibling
                     if(mPlaceholderCheck+mPlaceholderDelay < System.currentTimeMillis()) {
+                        boolean has_changed = false;
+                        if(lastNode != null && (drop_item != Drop.above_sibling || lastNode != nodeOrder.get(i))){
+                            //Item has changed
+                            has_changed = true;
+                        }
                         drop_item = Drop.above_sibling;
                         lastNode = nodeOrder.get(i);
                         if(adapter.placeholder.getParent() != null){
@@ -209,6 +242,13 @@ public class DraggableTreeView extends FrameLayout{
                             ((ViewGroup) lastNode.getView().getParent()).addView(adapter.bad_placeholder, pos);
                             drop_item = Drop.cancel;
                         }else {
+                            if(has_changed) {
+                                if(i <= nodeOrder.indexOf(mobileNode) || lastNode.getLevel() > mobileNode.getLevel()){
+                                    mDragItemCallback.onChangedPosition(mobileNode.getView(), mobileNode, lastNode.getParent(), lastNode.getPosition()+1);
+                                }else {
+                                    mDragItemCallback.onChangedPosition(mobileNode.getView(), mobileNode, lastNode.getParent(), lastNode.getPosition());
+                                }
+                            }
                             ((ViewGroup) lastNode.getView().getParent()).addView(adapter.placeholder, pos);
                         }
                         mPlaceholderCheck = System.currentTimeMillis();
@@ -216,6 +256,13 @@ public class DraggableTreeView extends FrameLayout{
             }else if(mLastEventX >  mDownX+dpToPx(40)) {
                 //make child
                 if(mPlaceholderCheck+mPlaceholderDelay < System.currentTimeMillis()) {
+                    TreeNode temp_node = null;
+                    boolean has_changed = false;
+                    if(lastNode != null && (drop_item != Drop.child || lastNode != nodeOrder.get(i))){
+                        //Item has changed
+                        has_changed = true;
+                        temp_node = lastNode;
+                    }
                     drop_item = Drop.child;
                     lastNode = nodeOrder.get(i);
                     if(adapter.placeholder.getParent() != null){
@@ -234,6 +281,9 @@ public class DraggableTreeView extends FrameLayout{
                         ((ViewGroup) lastNode.getView()).addView(adapter.bad_placeholder);
                         drop_item = Drop.cancel;
                     }else {
+                        if(has_changed && temp_node != null) {
+                            mDragItemCallback.onChangedPosition(mobileNode.getView(), mobileNode, temp_node,0);
+                        }
                         ((ViewGroup) lastNode.getView()).addView(adapter.placeholder);
                     }
                     mPlaceholderCheck = System.currentTimeMillis();
@@ -241,6 +291,11 @@ public class DraggableTreeView extends FrameLayout{
             }else if(mLastEventY > viewRect.bottom){
                     //below so make sibling
                     if(mPlaceholderCheck+mPlaceholderDelay < System.currentTimeMillis()) {
+                        boolean has_changed = false;
+                        if(lastNode != null && (drop_item != Drop.below_sibling || lastNode != nodeOrder.get(i))){
+                            //Item has changed
+                            has_changed = true;
+                        }
                         drop_item = Drop.below_sibling;
                         lastNode = nodeOrder.get(i);
                         if(adapter.placeholder.getParent() != null){
@@ -260,12 +315,24 @@ public class DraggableTreeView extends FrameLayout{
                             ((ViewGroup) lastNode.getView().getParent()).addView(adapter.bad_placeholder, pos + 1);
                             drop_item = Drop.cancel;
                         }else {
+                            if(has_changed) {
+                                if(i <= nodeOrder.indexOf(mobileNode) || lastNode.getLevel() > mobileNode.getLevel()){
+                                    mDragItemCallback.onChangedPosition(mobileNode.getView(), mobileNode, lastNode.getParent(), lastNode.getPosition() + 2);
+                                }else{
+                                    mDragItemCallback.onChangedPosition(mobileNode.getView(), mobileNode, lastNode.getParent(), lastNode.getPosition() + 1);
+                                }
+                            }
                             ((ViewGroup) lastNode.getView().getParent()).addView(adapter.placeholder, pos + 1);
                         }
                         mPlaceholderCheck = System.currentTimeMillis();
                     }
                 }else{
                     if(mPlaceholderCheck+mPlaceholderDelay < System.currentTimeMillis()) {
+                        boolean has_changed = false;
+                        if(lastNode != null && (drop_item != Drop.below_sibling || lastNode != nodeOrder.get(i))){
+                            //Item has changed
+                            has_changed = true;
+                        }
                         drop_item = Drop.below_sibling;
                         lastNode = nodeOrder.get(i);
                         if(adapter.placeholder.getParent() != null){
@@ -280,16 +347,25 @@ public class DraggableTreeView extends FrameLayout{
                         adapter.placeholder.setLayoutParams(layoutParams);
                         adapter.bad_placeholder.setLayoutParams(layoutParams);
                         int pos = ((ViewGroup) lastNode.getView().getParent()).indexOfChild(lastNode.getView());
+
                         int level = mobileNode.getChildLevel()+lastNode.getLevel();
                         if(maxLevels != -1 && maxLevels < level){
                             ((ViewGroup) lastNode.getView().getParent()).addView(adapter.bad_placeholder, pos + 1);
                             drop_item = Drop.cancel;
                         }else {
+                            if(has_changed) {
+                                if(i <= nodeOrder.indexOf(mobileNode) || lastNode.getLevel() > mobileNode.getLevel()){
+                                    mDragItemCallback.onChangedPosition(mobileNode.getView(), mobileNode, lastNode.getParent(), lastNode.getPosition() + 2);
+                                }else{
+                                    mDragItemCallback.onChangedPosition(mobileNode.getView(), mobileNode, lastNode.getParent(), lastNode.getPosition() + 1);
+                                }
+                            }
                             ((ViewGroup) lastNode.getView().getParent()).addView(adapter.placeholder, pos + 1);
                         }
                         mPlaceholderCheck = System.currentTimeMillis();
                     }
                 }
+
             }
         }
     }
@@ -308,18 +384,17 @@ public class DraggableTreeView extends FrameLayout{
                 //Make sure it didn't drop on itself
                 if(lastNode != mobileNode || drop_item != Drop.cancel) {
                     if (drop_item == Drop.above_sibling) {
-                        Log.e("ee", "Above " + (String) lastNode.getData());
                         int pos = lastNode.getPosition();
                         mobileNode.setParent(lastNode.getParent(), pos - 1);
+                        mDragItemCallback.onEndDrag(mobileNode.getView(),mobileNode,lastNode,mobileNode.getPosition()+1);
                     } else if (drop_item == Drop.below_sibling) {
-                        Log.e("ee", "Below " + (String) lastNode.getData());
                         int pos = lastNode.getPosition();
                         //if it came from below we need to add
-                        Log.e("ee",String.valueOf(pos));
                         mobileNode.setParent(lastNode.getParent(), pos);
+                        mDragItemCallback.onEndDrag(mobileNode.getView(),mobileNode,lastNode,mobileNode.getPosition()+1);
                     } else if (drop_item == Drop.child) {
-                        Log.e("ee", "Child " + (String) lastNode.getData());
                         mobileNode.setParent(lastNode,0);
+                        mDragItemCallback.onEndDrag(mobileNode.getView(),mobileNode,lastNode,mobileNode.getPosition()+1);
                     }
                 }
 
@@ -350,6 +425,7 @@ public class DraggableTreeView extends FrameLayout{
                     mobileNode = node;
                     addToView(mItem,node);
                     mobileView = mItem;
+                    mDragItemCallback.onStartDrag(mobileNode.getView(),mobileNode);
                     mItem.post(new Runnable() {
                         @Override
                         public void run() {
